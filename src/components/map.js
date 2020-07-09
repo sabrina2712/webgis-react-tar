@@ -40,21 +40,27 @@ class MyMap extends React.Component {
                 features: (new GeoJSON()).readFeatures(geojsonObj)
         });
 
+        
 
-// for pumping rate
+
+// for pumping rate and drawdown
+
+
+
+
 
             dataTar.forEach((el) => {
                 var x = el.geometry.coordinates[0]
                 var y = el.geometry.coordinates[1]
-                console.log(el.properties.Pumping_m3)
+                console.log(el.properties.Drawdown_m)
                 var iconFeature = new Feature({
                 geometry: new Point(transform([x, y], 'EPSG:4326', 'EPSG:3857')),
                 name: 'Marker ',
-                "properties": { pump: parseFloat(el.properties.Pumping_m3) }
+                "properties": { pump: parseFloat(el.properties.Pumping_m3), DD:parseFloat(el.properties.Drawdown_m)  }
 
 
     });
-
+                 
                 vectorSource.addFeature(iconFeature);
 
 })
@@ -74,12 +80,43 @@ class MyMap extends React.Component {
     });
 }
 
-            var vectorLayerForPump = new VectorLayer({
-                fKey: "pump",
+
+// style for Drawdown
+
+function getStyleDrwaDown(feature) {
+    return new Style({
+        image: new CircleStyle({
+        radius: feature.get("properties").DD/2,
+        fill: new Fill({
+
+        color: 'rgba(220,20,60,0.7)'
+    }),
+        stroke: new Stroke({ color: 'rgba(220,20,60,0.7)', width: 1 })
+
+        
+})
+})
+}
+
+
+// layer for Drawdown  
+
+            var vectorLayerForDD = new VectorLayer({
+                fKey: "DD",
                 source: vectorSource,
-                style: getStylePump
-        }
-);
+                style:  getStyleDrwaDown
+        })
+
+
+// layer for pump
+        
+        var vectorLayerForPump = new VectorLayer({
+            fKey: "pump",
+            source: vectorSource,
+            style: getStylePump
+    })
+
+
 
 
         // for specific conductivity
@@ -245,6 +282,12 @@ class MyMap extends React.Component {
             }
         }
 
+        document.getElementById("drawD").onchange = (event) => {
+            overLayer.setPosition(undefined)
+            if (event.target.checked === true) { map.addLayer(vectorLayerForDD) } else {
+                map.removeLayer(vectorLayerForDD)
+            }
+        }
 
 
         // creating map
@@ -295,7 +338,7 @@ class MyMap extends React.Component {
             const fKey = lastPair[1];
 
             console.log(feature, fKey)
-            info = <div>{fKey}: {feature.values_.properties[fKey]}</div>;
+        info = <div>{fKey}: {feature.values_.properties[fKey]}</div>;
         }
       
        
@@ -311,6 +354,7 @@ class MyMap extends React.Component {
                 <Col sm={3}>
                     <div id="sidebar" >
                         <span>Click here:</span>
+                         
                         <div>
                             <label  for="dtw" > DTW</label>
                             <input type="checkbox" id="dtw"/>
@@ -322,6 +366,8 @@ class MyMap extends React.Component {
                             <input type="checkbox" id="HyCon"/>
                             <label for="pump">Pumping Rate</label>
                             <input type="checkbox" id="pump"/>
+                            <label for="drawD">Draw Down</label>
+                            <input type="checkbox" id="drawD"/>
                         </div>
                     </div>
                 </Col>
